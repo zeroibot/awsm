@@ -1,4 +1,8 @@
-v0.1.2 - Content-Type 
+v0.1.3 - Rename Package
+    x Commit: 2026-03-28 22:36
+    x Rename package to github.com/zeroibot/awsm
+    x Use github.com/zeroibot/pack
+v0.1.2 - Content-Type
     x Commit: 2025-12-02 13:54
     x Add ContentType during upload
     x UploadConfig.PublicURL

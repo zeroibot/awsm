@@ -6,10 +6,11 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/roidaradal/fn/lang"
+	"github.com/zeroibot/pack/lang"
+	"github.com/zeroibot/pack/str"
 )
 
 type UploadConfig struct {
@@ -22,10 +23,10 @@ type UploadConfig struct {
 	ContentType string
 }
 
-// Upload file to S3 bucket
+// UploadFile uploads a file to an S3 bucket
 func UploadFile(cfg *UploadConfig) error {
 	// Load AWS configuration
-	profile := lang.Ternary(cfg.Profile == "", "default", cfg.Profile)
+	profile := lang.Ternary(str.IsEmpty(cfg.Profile), "default", cfg.Profile)
 	awsCfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithSharedConfigProfile(profile),
 		config.WithRegion(cfg.Region),
@@ -44,16 +45,16 @@ func UploadFile(cfg *UploadConfig) error {
 	}
 	defer file.Close()
 
-	// Create s3 uploader
-	uploader := manager.NewUploader(client)
+	// Create S3 uploader
+	uploader := transfermanager.New(client)
 
 	// Upload file
-	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
-		Bucket:      &cfg.Bucket,
-		Key:         &cfg.BucketPath,
+	_, err = uploader.UploadObject(context.TODO(), &transfermanager.UploadObjectInput{
+		Bucket:      new(cfg.Bucket),
+		Key:         new(cfg.BucketPath),
 		Body:        file,
 		ACL:         cfg.ACL,
-		ContentType: &cfg.ContentType,
+		ContentType: new(cfg.ContentType),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to upload file %q to S3: %w", cfg.FilePath, err)
@@ -62,7 +63,7 @@ func UploadFile(cfg *UploadConfig) error {
 	return nil
 }
 
-// Get the output URL of the uploaded item
+// PublicURL returns the public URL of the uploaded file
 func (cfg UploadConfig) PublicURL() string {
 	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.Bucket, cfg.Region, cfg.BucketPath)
 }
